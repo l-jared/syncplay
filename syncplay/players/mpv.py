@@ -156,7 +156,8 @@ class MpvPlayer(BasePlayer):
             self._client.ui.showDebugMessage("Not sending setPaused to mpv as state is already {}".format(value))
             return
         pauseValue = "yes" if value else "no"
-        self._setProperty("pause", pauseValue)
+        #self._setProperty("pause", pauseValue)
+        self._listener.sendLine(["script-message-to", "syncplayintf", "update_paused",  pauseValue])
         self._paused = value
         if value == False:
             self.lastMPVPositionUpdate = time.time()
@@ -385,7 +386,8 @@ class MpvPlayer(BasePlayer):
         self._position = max(value, 0)
         self._client.ui.showDebugMessage(
             "Setting position to {}...".format(self._position))
-        self._setProperty(self.POSITION_QUERY, "{}".format(value))
+        #self._setProperty(self.POSITION_QUERY, "{}".format(value))
+        self._listener.sendLine(["script-message-to", "syncplayintf", "update_position",  "{}".format(value)])
         time.sleep(0.03)
         self.lastMPVPositionUpdate = time.time()
 

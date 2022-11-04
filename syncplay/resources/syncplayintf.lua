@@ -54,6 +54,9 @@ local assdraw = require "mp.assdraw"
 
 local opt = require 'mp.options'
 
+local group_position = 0
+local group_paused = "false"
+
 local repl_active = false
 local insert_mode = false
 local line = ''
@@ -357,14 +360,40 @@ end)
 
 function state_paused_and_position()
 	-- bob
-	local pause_status = tostring(mp.get_property_native("pause"))
-	local position_status = tostring(mp.get_property_native("time-pos"))
-	mp.command('print-text "<paused='..pause_status..', pos='..position_status..'>"')
+	mp.command('print-text "<paused='..group_paused..', pos='..group_position..'>"')
 	-- mp.command('print-text "<paused>true</paused><position>7.6</position>"')
+end
+
+function update_position(position)
+	position = tonumber(position)
+	if position then
+		group_position = position
+		mp.commandv('script-message-to', 'groupwatch_sync', 'start-time', os.time() - group_position, 1, 1)
+	end
+end
+
+function update_paused(position)
+	group_paused = position == 'yes' and 'true' or 'false'
 end
 
 mp.register_script_message('get_paused_and_position', function()
 	state_paused_and_position()
+end)
+
+mp.register_script_message('update_position', function(e)
+	update_position(e)
+end)
+
+mp.register_script_message('update_paused', function(e)
+	update_paused(e)
+end)
+
+mp.add_periodic_timer(0.1, function()
+	if group_paused == 'false' then
+		group_position = group_position + 0.1
+	else
+		mp.commandv('script-message-to', 'groupwatch_sync', 'start-time', os.time() - group_position, 1, 1)
+	end
 end)
 
 -- Default options
